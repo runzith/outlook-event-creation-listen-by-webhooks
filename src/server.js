@@ -11,14 +11,7 @@ app.use(express.json());
 
 async function getAccessToken() {
   try {
-
-    // https://local-api.kfadvance-dev.com:3030/vn/scheduling/get-graph-token
-
-    const response = await axios.get(`https://local-api.kfadvance-dev.com:3030/vn/scheduling/get-graph-token`);
-    console.log("🚀 ~ getAccessToken ~ response:", response)
-    // console.log("🚀 ~ getAccessToken ~ response:", response)
-
-    // return response.data.access_token; // get from KFA / hardcode
+    return ''; // get from KFA / hardcode
   } catch (error) {
     console.error('Failed to get access token:', error.response?.data || error.message);
     throw new Error('Failed to authenticate with Microsoft Graph');
@@ -50,10 +43,9 @@ async function processNotification(notification) {
     return;
   }
 
-  const userId = 'ranjith.bandi@kornferry.com';
+  const userId = 'attendee.surname@kornferry.com';
   const eventId = resourceData?.id;
 
-  // console.log(`Processing event - User: ${userId}, Event: ${eventId}`);
 
   await new Promise(resolve => setTimeout(resolve, 1000));
 
@@ -164,7 +156,6 @@ app.get('/health', (req, res) => {
 app.listen(PORT, () => {
   console.log(`\n Outlook Webhook POC running on port ${PORT}`);
   console.log(` Notifications: POST /api/notifications`);
-//   console.log(` Lifecycle: POST /api/lifecycle\n`);
 });
 
 module.exports = app;
