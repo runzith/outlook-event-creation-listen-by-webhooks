@@ -1,0 +1,15 @@
+{
+  "name": "outlook-invitation-webhook-poc",
+  "version": "1.0.0",
+  "description": "POC: Listen to Microsoft Graph calendar events and log @kornferry.com attendees",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch --watch-preserve-output src/server.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.0",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2"
+  }
+}
