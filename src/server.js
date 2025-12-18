@@ -10,12 +10,24 @@ const PORT = process.env.PORT || 3005;
 app.use(express.json());
 
 async function getAccessToken() {
-  return `eyJ0eXAiOiJKV1QiLCJub25jZSI6IkdCM1F1cVk0dV96NkZKMGxOVEhzVktzRzJ4cVFJX2ItQkJIVlRJMW9iZTAiLCJhbGciOiJSUzI1NiIsIng1dCI6InJ0c0ZULWItN0x1WTdEVlllU05LY0lKN1ZuYyIsImtpZCI6InJ0c0ZULWItN0x1WTdEVlllU05LY0lKN1ZuYyJ9.eyJhdWQiOiJodHRwczovL2dyYXBoLm1pY3Jvc29mdC5jb20iLCJpc3MiOiJodHRwczovL3N0cy53aW5kb3dzLm5ldC9lOWQyMTM4Ny00M2YxLTRlMDYtYTI1My1mOWVkOTA5NmRjNDgvIiwiaWF0IjoxNzY2MDQ1MTY2LCJuYmYiOjE3NjYwNDUxNjYsImV4cCI6MTc2NjA0OTA2NiwiYWlvIjoiazJKZ1lHaDhuYXo2OFBiRmJ0c1BoN1U3SlFObkFBQT0iLCJhcHBfZGlzcGxheW5hbWUiOiJLRk…cjNSamFnYUtjUWdMOUxMcnRoMjF2dU9fZTN1TF9Nc2hnRTFDVVEwaUFtUUVDRGtCcEFBIiwieG1zX3N1Yl9mY3QiOiIzIDkiLCJ4bXNfdGNkdCI6MTM4ODQ2MjQyMCwieG1zX3RudF9mY3QiOiIxMiAzIn0.WwVwqztEe-2S67TuIBJ7hYc2xDdx0Ttd5yS8vdcseaJB-laZbpE_fGzSa98veFAOUg6Kovp8pyBe_skb7KaVGm96JculN7PD-vs1x968UUWLGPwzdytJQp3LUYePsDHoFYdtjlwSC1_kw5H-pFDoyusIrJEC1V-tkmtD2P_3AbhUWdUtq2WOdG5XxnSEZ2lOTfkEAoV4pIEZgK0VSm18GQII3W4sDuc37MnkVMZRq619pGUDnI5uOrP6UyM0KoYqgcO9XvyuQrhYmid9jXRbO2ELa9W2vfU0ayG6hKuhbUoJhG7W8EO-j88YwBacMnGljm0tVVzJnNYAy_yLBT56jw`;
+  try {
+
+    // https://local-api.kfadvance-dev.com:3030/vn/scheduling/get-graph-token
+
+    const response = await axios.get(`https://local-api.kfadvance-dev.com:3030/vn/scheduling/get-graph-token`);
+    console.log("🚀 ~ getAccessToken ~ response:", response)
+    // console.log("🚀 ~ getAccessToken ~ response:", response)
+
+    // return response.data.access_token; // get from KFA / hardcode
+  } catch (error) {
+    console.error('Failed to get access token:', error.response?.data || error.message);
+    throw new Error('Failed to authenticate with Microsoft Graph');
+  }
 }
 
 async function fetchEventDetails(userId, eventId) {
-  console.log("🚀 ~ fetchEventDetails ~ userId:", userId)
   const accessToken = await getAccessToken();
+  console.log("🚀 ~ fetchEventDetails ~ userId:", {userId, eventId, accessToken})
   const response = await axios.get(
     `https://graph.microsoft.com/v1.0/users/${userId}/events/${eventId}`,
     {
@@ -38,10 +50,10 @@ async function processNotification(notification) {
     return;
   }
 
-  const userId = 'ranjith@kornferry.com';
+  const userId = 'ranjith.bandi@kornferry.com';
   const eventId = resourceData?.id;
 
-  console.log(`Processing event - User: ${userId}, Event: ${eventId}`);
+  // console.log(`Processing event - User: ${userId}, Event: ${eventId}`);
 
   await new Promise(resolve => setTimeout(resolve, 1000));
 
@@ -69,14 +81,13 @@ async function processNotification(notification) {
 app.post("/api/create-subscription", async (req, res) => {
   const accessToken = await msGraphV1Service.getAccessToken();
   try {
-    // const accessToken = await getAccessToken();
+    const accessToken = await getAccessToken();
 
     if (!accessToken) {
       throw new Error("Failed to obtain access token");
     }
     const tunnelUrl = `https://mtv-referenced-accommodate-despite.trycloudflare.com`;
     const userEmail = "ranjith.bandi@kornferry.com";
-    // console.log("🚀 ~ userEmail:", userEmail)
 
     const clientState = uuidv4();
     const webhookUrl = `${tunnelUrl}/api/notifications`;
@@ -104,10 +115,6 @@ app.post("/api/create-subscription", async (req, res) => {
 
     const subscription = response.data;
 
-    // res.status(201).json({
-    //     message: 'Subscription created successfully',
-    //     subscription: subscription
-    // });
   } catch (error) {
     console.error(
       "Error creating subscription:",
@@ -145,26 +152,6 @@ app.post('/api/notifications', async (req, res) => {
     }
   } catch (error) {
     console.error('Webhook error:', error.message);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
-// POST /api/lifecycle - Handle subscription lifecycle notifications
-app.post('/api/lifecycle', (req, res) => {
-  try {
-    const validationToken = req.query.validationToken;
-    if (validationToken) {
-      return res.status(200).type('text/plain').send(validationToken);
-    }
-
-    const notifications = req.body?.value;
-    if (notifications && Array.isArray(notifications)) {
-      notifications.forEach(n => console.log(`Lifecycle: ${n.lifecycleEvent} for ${n.subscriptionId}`));
-    }
-
-    res.status(200).json({ message: 'Lifecycle notification processed' });
-  } catch (error) {
-    console.error('Lifecycle error:', error.message);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
